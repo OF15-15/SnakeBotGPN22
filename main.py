@@ -2,6 +2,7 @@
 import random
 import socket
 import time
+import numpy as np
 
 # host and port to connect to the server
 HOST = "gpn-tron.duckdns.org"
@@ -14,7 +15,8 @@ class GameBoard:
     def __init__(self, size):
         self.size = size
         # saves all the data in a 2 dim array, -1 is empty
-        self.board = [[-1 for _ in range(self.size)] for _ in range(self.size)]
+        # np to make it faster
+        self.board = np.full((size, size), -1)
     def pos(self, move):
         """Update the Game when a player does a given move"""
         self.board[int(move[2])][int(move[3])] = int(move[1])
