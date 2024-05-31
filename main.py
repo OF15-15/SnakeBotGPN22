@@ -15,6 +15,12 @@ class GameBoard:
     def pos(self, move):
         self.board[int(move[2])][int(move[3])] = int(move[1])
 
+    def remove(self, player):
+        for row in self.board:
+            for i in range(len(row)):
+                if row[i] == player:
+                    row[i] = 0
+
     def __str__(self):
         string = ''
         for row in self.board:
@@ -80,7 +86,8 @@ def main():
                         case "player":
                             players.append([0, 0])
                         case "die":
-                            
+                            for pl in move[1:]:
+                                gb.remove(pl)
                         case _:
                             print(move)
 
