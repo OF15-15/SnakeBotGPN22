@@ -174,5 +174,70 @@ def choose_dir(gb):
             return i
     return 0
 
+class Test:
+    def choose_dir(self):
+        """choose the next direction for the player"""
+        size, player = 5, None
+        players = [[1, 1], [1, 4], [3, 2]]
+        me = 0
+        my_heads = [players[me]]
+        other_players = players[:me] + players[me+1:]
+        # -1 -> occupied
+        # 0 -> free
+        # [a, b, c, ...] => a -> player_id; b, c, ... -> prev. squares
+        board = [[-1,    -1,  0,  0, -1],
+                 [-1,[-25],  0,  -1,[1]],
+                 [ 0,    0,  0,  0,  -1],
+                 [ 0,    -1,[2],  0,  -1],
+                 [ 0,    0, -1, -1, -1]]
+
+        while True:
+            new_players = []
+            new_mes = []
+            for head in other_players:
+                for i in range(4):
+                    moved = move(head, i)
+                    y, x = [moved[0]%size, moved[1]%size]
+                    if type(board[y][x]) == list:
+                        # if list from me: eventually go there
+                        if board[y][x][0] <= -2 and [y, x] not in my_heads:
+                            board[y][x] = [-1, board[y][x], board[head[0]][head[1]] + [head,]]
+                            new_players.append([y, x])
+                    elif board[y][x] == 0:
+                        # if empty: go there
+                        board[y][x] = board[head[0]][head[1]] + [head,]
+                        new_players.append([y, x])
+            for head in my_heads:
+                for i in range(4):
+                    moved = move(head, i)
+                    y, x = [moved[0] % size, moved[1] % size]
+                    if type(board[y][x]) == list:
+                        # if list from me: override it, if you haven't been there
+                        if board[y][x][0] <= -2 and [y, x] not in board[head[0]][head[1]]:
+                            board[y][x] = board[head[0]][head[1]] + [head, ]
+                            if [y, x] not in new_mes:
+                                new_mes.append([y, x])
+                    elif board[y][x] == 0:
+                        # if empty: go there
+                        board[y][x] = board[head[0]][head[1]] + [head, ]
+                        if board[head[0]][head[1]][0] <= -20:
+                            board[y][x][0] = - 2 - i
+                        if [y, x] not in new_mes:
+                            new_mes.append([y, x])
+            if not new_mes:
+                break
+            my_heads = new_mes
+            other_players = new_players
+        print(my_heads)
+        print([-2-board[x][y][0] for x, y in my_heads])
+
+
+
+        #print(board)
+
+
+
+
 # start the main loop
-main()
+test = Test()
+test.choose_dir()
