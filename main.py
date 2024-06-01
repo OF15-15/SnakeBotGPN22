@@ -12,6 +12,7 @@ DIRS = [b"up", b"right", b"down", b"left"]
 
 class GameBoard:
     """describes the current game state"""
+
     def __init__(self, size, id):
         self.size = size
         # saves all the data in a 2 dim array, -1 is empty
@@ -19,6 +20,7 @@ class GameBoard:
         self.board = np.full((size, size), -1)
         self.id = id
         self.pos = [0, 0]
+
     def update_pos(self, move):
         """Update the Game when a player does a given move"""
         self.board[int(move[3])][int(move[2])] = int(move[1])
@@ -34,6 +36,22 @@ class GameBoard:
                     self.board[j][i] = -1
         print("removed player", player)
 
+    def top(self, pos):
+        """Returns if the square above is empty"""
+        return self.board[(pos[0] - 1) % self.size][pos[1]]
+
+    def right(self, pos):
+        """Returns if the square to the rigth is empty"""
+        return self.board[pos[0]][(pos[1] + 1) % self.size]
+
+    def bottom(self, pos):
+        """Returns if the square below is empty"""
+        return self.board[(pos[0] + 1) % self.size][pos[1]]
+
+    def left(self, pos):
+        """Returns if the square to the left is empty"""
+        return self.board[pos[0]][(pos[1] -1 ) % self.size]
+
     def __str__(self):
         string = ''
         for row in self.board:
@@ -45,14 +63,12 @@ class GameBoard:
             string = string[:-1] + '\n'
         return string
 
-
 def spl(s):
     """split the incoming binary string into a 2d list"""
     string = s.decode()
     commands = string.split("\n")
     data = [c.split('|') for c in commands]
     return data
-
 
 def main():
     """main game loop"""
@@ -62,7 +78,7 @@ def main():
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.connect((HOST, PORT))
         with open("pw.txt") as f:
-            s.send(b'join|OF15-15|' + f.read().encode() + b'\n')
+            s.send(b'join|' + f.readline().encode() + b'|' + f.readline().encode() + b'\n')
 
         # declare vars
         old_data = ''
@@ -77,9 +93,9 @@ def main():
             if raw_data != old_data:
                 old_data = raw_data
                 spl_data = spl(raw_data)
-                #direct user input
-                #i = input()
-                #s.send(b'move|' + direc[i] + b'\n')
+                # direct user input
+                # i = input()
+                # s.send(b'move|' + direc[i] + b'\n')
                 for move in spl_data:
                     # iterate over all moves and perform a case matching the command
                     match move[0]:
@@ -88,8 +104,8 @@ def main():
                         case "game":
                             # starting a new game: reset the board, start with moving upwards
                             gb = GameBoard(int(move[1]), int(move[3]))
-                            #width, height, id = move[1:]
-                            s.send(b'chat|running the nets')
+                            # width, height, id = move[1:]
+                            s.send(b'chat|running the nets\n')
                             s.send(b'move|up\n')
                             print(f"game started ({gb.size}x{gb.size}) as player {gb.id}")
                         case "tick":
@@ -116,7 +132,7 @@ def main():
 
     except Exception as e:
         # raise the catched exeptions again
-        raise(e)
+        raise (e)
     finally:
         # make sure to shutdown and close the tcp connection correctly
         s.shutdown(1)
@@ -126,14 +142,15 @@ def choose_dir(gb):
     """choose the next direction for the player"""
     pos = gb.pos
     print(pos, gb.id)
-    if gb.board[(pos[0]-1)%gb.size][pos[1]] == -1:
+    if gb.top(pos):
         return 0
-    elif gb.board[pos[0]][(pos[1]+1)%gb.size] == -1:
+    elif gb.right(pos):
         return 1
-    elif gb.board[(pos[0]+1)%gb.size][pos[1]] == -1:
+    elif gb.bottom(pos):
         return 2
-    elif gb.board[pos[0]][(pos[1]-1)%gb.size] == -1:
+    elif gb.left(pos):
         return 3
     return 0
+
 # start the main loop
 main()
