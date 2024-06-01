@@ -12,14 +12,19 @@ DIRS = [b"up", b"right", b"down", b"left"]
 
 class GameBoard:
     """describes the current game state"""
-    def __init__(self, size):
+    def __init__(self, size, id):
         self.size = size
         # saves all the data in a 2 dim array, -1 is empty
         # np to make it faster
         self.board = np.full((size, size), -1)
-    def pos(self, move):
+        self.id = id
+        self.pos = [0, 0]
+    def update_pos(self, move):
         """Update the Game when a player does a given move"""
-        self.board[int(move[2])][int(move[3])] = int(move[1])
+        self.board[int(move[3])][int(move[2])] = int(move[1])
+        # update your position if it's your move
+        if int(move[1]) == self.id:
+            self.pos = [int(move[3]), int(move[2])]
 
     def remove(self, player):
         """Removes a player that died"""
@@ -60,7 +65,6 @@ def main():
         # declare vars
         old_data = ''
         gb = None
-        width, height, id, dir = 0, 0, 0, 0
         players = []
 
         # loop
@@ -81,20 +85,21 @@ def main():
                             pass
                         case "game":
                             # starting a new game: reset the board, start with moving upwards
-                            gb = GameBoard(int(move[1]))
-                            width, height, id = move[1:]
+                            gb = GameBoard(int(move[1]), int(move[3]))
+                            #width, height, id = move[1:]
                             s.send(b'move|up\n')
-                            print(f"game started ({width}x{height}) as player {id}")
+                            print(f"game started ({gb.size}x{gb.size}) as player {gb.id}")
                         case "tick":
                             # one gamestep
                             # print current board
                             print(gb)
                             # call choose_dir() func to set a new direction and move there
                             dir = choose_dir(gb)
+                            print(DIRS[dir])
                             s.send(b'move|' + DIRS[dir] + b'\n')
                         case "pos":
                             # update a player's position
-                            gb.pos(move)
+                            gb.update_pos(move)
                         case "player":
                             # initialize a new player, seems unnecessary currently
                             pass
@@ -116,7 +121,16 @@ def main():
 
 def choose_dir(gb):
     """choose the next direction for the player"""
+    pos = gb.pos
+    print(pos)
+    if gb.board[(pos[0]-1)%gb.size][pos[1]] == -1:
+        return 0
+    elif gb.board[pos[0]][(pos[1]+1)%gb.size] == -1:
+        return 1
+    elif gb.board[(pos[0]+1)%gb.size][pos[1]] == -1:
+        return 2
+    elif gb.board[pos[0]][(pos[1]-1)%gb.size] == -1:
+        return 3
     return 0
-
 # start the main loop
 main()
