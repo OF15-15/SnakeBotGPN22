@@ -32,6 +32,7 @@ class GameBoard:
             for i in range(self.size):
                 if self.board[j][i] == player:
                     self.board[j][i] = -1
+        print("removed player", player)
 
     def __str__(self):
         string = ''
@@ -88,6 +89,7 @@ def main():
                             # starting a new game: reset the board, start with moving upwards
                             gb = GameBoard(int(move[1]), int(move[3]))
                             #width, height, id = move[1:]
+                            s.send(b'chat|running the nets')
                             s.send(b'move|up\n')
                             print(f"game started ({gb.size}x{gb.size}) as player {gb.id}")
                         case "tick":
@@ -107,7 +109,7 @@ def main():
                         case "die":
                             # remove a dead player from the game board
                             for pl in move[1:]:
-                                gb.remove(pl)
+                                gb.remove(int(pl))
                         case _:
                             # if unknown, just print it
                             print(move)
