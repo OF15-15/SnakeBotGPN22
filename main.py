@@ -38,11 +38,12 @@ class GameBoard:
 
     def free(self, pos, dirs, konjunk = True):
         """Returns if the square in the specified directions are empty"""
+        dirs = [d%4 for d in dirs]
         bools = []
-        if 0 in dirs: bools.append(self.board[(pos[0] - 1) % self.size][pos[1]] == -1)
-        if 1 in dirs: bools.append(self.board[pos[0]][(pos[1] + 1) % self.size] == -1)
-        if 2 in dirs: bools.append(self.board[(pos[0] + 1) % self.size][pos[1]] == -1)
-        if 3 in dirs: bools.append(self.board[pos[0]][(pos[1] -1 ) % self.size] == -1)
+        if 0 in dirs: bools.append(self.board[(pos[0] - 1) % self.size][pos[1] % self.size] == -1)
+        if 1 in dirs: bools.append(self.board[pos[0] % self.size][(pos[1] + 1) % self.size] == -1)
+        if 2 in dirs: bools.append(self.board[(pos[0] + 1) % self.size][pos[1] % self.size] == -1)
+        if 3 in dirs: bools.append(self.board[pos[0] % self.size][(pos[1] -1 ) % self.size] == -1)
         if konjunk: return all(bools)
         return any(bools)
 
@@ -63,6 +64,18 @@ def spl(s):
     commands = string.split("\n")
     data = [c.split('|') for c in commands]
     return data
+
+def move(pos, direction):
+    """move a position in a given direction"""
+    if direction == 0:
+        return [pos[0] - 1, pos[1]]
+    elif direction == 1:
+        return [pos[0], pos[1] + 1]
+    elif direction == 2:
+        return [pos[0] + 1, pos[1]]
+    elif direction == 3:
+        return [pos[0], pos[1] - 1]
+    return pos
 
 def main():
     """main game loop"""
@@ -138,7 +151,7 @@ def choose_dir(gb):
     """choose the next direction for the player"""
     print(gb.pos, gb.id)
     for i in range(4):
-        if gb.free(gb.pos, [i]):
+        if gb.free(gb.pos, [i]) and gb.free(move(gb.pos, i), [i-1, i, i+1], False):
             return i
     return 0
 
