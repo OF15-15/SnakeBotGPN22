@@ -75,6 +75,62 @@ class GameBoard:
             string = string[:-1] + '\n'
         return string
 
+def bf(gb):
+    opponents = np.array(gb.board)
+    opponents[opponents >= 0] = -2
+    queue = []
+    for i in range(len(gb.heads)):
+        if i != gb.id:
+            queue.append([gb.heads[i][1], gb.heads[i][0], 0])
+
+    for i in gb.heads:
+        opponents[i[0]][i[1]] = 0
+
+    while len(queue) > 0:
+        x, y = queue.pop(0)
+        if opponents[(x + 1) % gb.size][y] == -1:
+            opponents[(x + 1) % gb.size][y] = opponents[x][y] + 1
+            queue.append([(x + 1) % gb.size, y])
+        if opponents[(x - 1) % gb.size][y] == -1:
+            opponents[(x - 1) % gb.size][y] = opponents[x][y] + 1
+            queue.append([(x - 1) % gb.size, y])
+        if opponents[x][(y + 1) % gb.size] == -1:
+            opponents[x][(y + 1) % gb.size] = opponents[x][y] + 1
+            queue.append([x, (y + 1) % gb.size])
+        if opponents[x][(y - 1) % gb.size] == -1:
+            opponents[x][(y - 1) % gb.size] = opponents[x][y] + 1
+            queue.append([x, (y - 1) % gb.size])
+
+    myboard = np.array(gb.board)
+    myboard[myboard >= 0] = -2
+    queue = [[gb.heads[gb.id][0], gb.heads[gb.id][1]]]
+    myboard[gb.heads[gb.id][0]][gb.heads[gb.id][1]] = 0
+
+    while len(queue) > 0:
+        x, y = queue.pop(0)
+        if myboard[(x + 1) % gb.size][y] == -1:
+            myboard[(x + 1) % gb.size][y] = myboard[x][y] + 1
+            queue.append([(x + 1) % gb.size, y])
+        if myboard[(x - 1) % gb.size][y] == -1:
+            myboard[(x - 1) % gb.size][y] = myboard[x][y] + 1
+            queue.append([(x - 1) % gb.size, y])
+        if myboard[x][(y + 1) % gb.size] == -1:
+            myboard[x][(y + 1) % gb.size] = myboard[x][y] + 1
+            queue.append([x, (y + 1) % gb.size])
+        if myboard[x][(y - 1) % gb.size] == -1:
+            myboard[x][(y - 1) % gb.size] = myboard[x][y] + 1
+            queue.append([x, (y - 1) % gb.size])
+
+    for i in range(len(myboard)):
+        for j in range(len(myboard)):
+            if myboard[i][j] - opponents[i][j] == 0:
+                myboard[i][j] = -2
+            elif myboard[i][j] - opponents[i][j] < 0:
+                myboard[i][j] = -1
+
+    return myboard
+
+
 def spl(s):
     """split the incoming binary string into a 2d list"""
     string = s.decode()
