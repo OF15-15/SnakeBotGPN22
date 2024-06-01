@@ -36,21 +36,15 @@ class GameBoard:
                     self.board[j][i] = -1
         print("removed player", player)
 
-    def top(self, pos):
-        """Returns if the square above is empty"""
-        return self.board[(pos[0] - 1) % self.size][pos[1]]
-
-    def right(self, pos):
-        """Returns if the square to the rigth is empty"""
-        return self.board[pos[0]][(pos[1] + 1) % self.size]
-
-    def bottom(self, pos):
-        """Returns if the square below is empty"""
-        return self.board[(pos[0] + 1) % self.size][pos[1]]
-
-    def left(self, pos):
-        """Returns if the square to the left is empty"""
-        return self.board[pos[0]][(pos[1] -1 ) % self.size]
+    def free(self, pos, dirs, konjunk = True):
+        """Returns if the square in the specified directions are empty"""
+        bools = []
+        if 0 in dirs: bools.append(self.board[(pos[0] - 1) % self.size][pos[1]])
+        if 1 in dirs: bools.append(self.board[pos[0]][(pos[1] + 1) % self.size])
+        if 2 in dirs: bools.append(self.board[(pos[0] + 1) % self.size][pos[1]])
+        if 3 in dirs: bools.append(self.board[pos[0]][(pos[1] -1 ) % self.size])
+        if konjunk: return all(bools)
+        return any(bools)
 
     def __str__(self):
         string = ''
@@ -142,16 +136,10 @@ def main():
 
 def choose_dir(gb):
     """choose the next direction for the player"""
-    pos = gb.pos
-    print(pos, gb.id)
-    if gb.top(pos):
-        return 0
-    elif gb.right(pos):
-        return 1
-    elif gb.bottom(pos):
-        return 2
-    elif gb.left(pos):
-        return 3
+    print(gb.pos, gb.id)
+    for i in range(3):
+        if gb.free(gb.pos, i):
+            return i
     return 0
 
 # start the main loop
