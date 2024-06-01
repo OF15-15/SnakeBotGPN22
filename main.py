@@ -39,10 +39,10 @@ class GameBoard:
     def free(self, pos, dirs, konjunk = True):
         """Returns if the square in the specified directions are empty"""
         bools = []
-        if 0 in dirs: bools.append(self.board[(pos[0] - 1) % self.size][pos[1]])
-        if 1 in dirs: bools.append(self.board[pos[0]][(pos[1] + 1) % self.size])
-        if 2 in dirs: bools.append(self.board[(pos[0] + 1) % self.size][pos[1]])
-        if 3 in dirs: bools.append(self.board[pos[0]][(pos[1] -1 ) % self.size])
+        if 0 in dirs: bools.append(self.board[(pos[0] - 1) % self.size][pos[1]] == -1)
+        if 1 in dirs: bools.append(self.board[pos[0]][(pos[1] + 1) % self.size] == -1)
+        if 2 in dirs: bools.append(self.board[(pos[0] + 1) % self.size][pos[1]] == -1)
+        if 3 in dirs: bools.append(self.board[pos[0]][(pos[1] -1 ) % self.size] == -1)
         if konjunk: return all(bools)
         return any(bools)
 
@@ -137,7 +137,7 @@ def main():
 def choose_dir(gb):
     """choose the next direction for the player"""
     print(gb.pos, gb.id)
-    for i in range(3):
+    for i in range(4):
         if gb.free(gb.pos, [i]):
             return i
     return 0
