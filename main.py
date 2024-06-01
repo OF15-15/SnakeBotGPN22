@@ -74,26 +74,27 @@ class Game:
                     if type(board[y][x]) == list:
                         # if list from me: eventually go there
                         if board[y][x][0] <= -2 and not any([y, x] == l for l in my_heads):
-                            board[y][x] = [-1, board[y][x], board[head[0]][head[1]] + [head, ]]
-                            new_players.append([y, x])
+                           board[y][x] = [-1, board[y][x], board[head[0]][head[1]] + [head, ]]
+                           new_players.append([y, x])
                     elif board[y][x] == 0:
                         # if empty: go there
-                        board[y][x] = board[head[0]][head[1]] + [head, ]
+                        board[y][x] = board[head[0]][head[1]] + [head]
                         new_players.append([y, x])
             for head in my_heads:
                 for i in range(4):
                     moved = move(head, i)
                     y, x = [moved[0] % size, moved[1] % size]
                     if type(board[y][x]) == list:
+                        pass
                         # if list from me: override it, if you haven't been there
-                        if board[y][x][0] <= -2 and not any([y, x] == l for l in board[head[0]][head[1]]):
+                        if -10 <= board[y][x][0] <= -2 and not any([y, x] == l for l in board[head[0]][head[1]]):
                             board[y][x] = board[head[0]][head[1]] + [head, ]
                             if [y, x] not in new_mes:
                                 new_mes.append([y, x])
                     elif board[y][x] == 0:
                         # if empty: go there
-                        board[y][x] = board[head[0]][head[1]] + [head, ]
-                        if board[head[0]][head[1]][0] <= -20:
+                        board[y][x] = board[head[0]][head[1]] + [head]
+                        if board[y][x][0] <= -20:
                             board[y][x][0] = - 2 - i
                         if [y, x] not in new_mes:
                             new_mes.append([y, x])
@@ -104,7 +105,10 @@ class Game:
         y, x = my_heads[0]
         print(f"Aiming for ({y}|{x}) via {board[y][x]}")
         if board[y][x][0] <= -10:
-
+            for i in range(4):
+                if self.free(self.me.head, [i]):
+                    return i
+            return 0
         return - 2 - board[y][x][0]
 
     def __str__(self):
@@ -229,15 +233,31 @@ def main():
 main()
 def some_test_func():
     game = Game(2, 6)
+    pos = [4, 4]
     game.update_head_pos([0, 0], 0)
     game.update_head_pos([2, 2], 1)
-    game.update_head_pos([4, 4], 2)
-    game.choose_dir()
+    game.update_head_pos(pos, 2)
+    pos = move(pos, game.choose_dir())
+    pos[0] %= 6
+    pos[1] %= 6
+    print(game)
     game.update_head_pos([0, 1], 0)
     game.update_head_pos([1, 2], 1)
-    game.update_head_pos([3, 4], 2)
-    game.choose_dir()
-    game.update_head_pos([0, 1], 0)
-    game.update_head_pos([1, 2], 1)
-    game.update_head_pos([3, 4], 2)
+    game.update_head_pos(pos, 2)
+    pos = move(pos, game.choose_dir())
+    pos[0] %= 6
+    pos[1] %= 6
+    print(game)
+    game.update_head_pos([0, 2], 0)
+    game.update_head_pos([1, 1], 1)
+    game.update_head_pos(pos, 2)
+    print(game)
+    pos = move(pos, game.choose_dir())
+    pos[0] %= 6
+    pos[1] %= 6
+    game.update_head_pos([0, 2], 0)
+    game.update_head_pos([1, 1], 1)
+    game.update_head_pos(pos, 2)
+    print(game)
 
+#some_test_func()
