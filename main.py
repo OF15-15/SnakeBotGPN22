@@ -2,6 +2,7 @@ import random
 import socket
 import time
 import numpy as np
+import copy
 
 # host and port to connect to the server
 HOST = "gpn-tron.duckdns.org"
@@ -11,10 +12,10 @@ DIRS = [b"up", b"right", b"down", b"left"]
 
 class Game:
     def __init__(self, id, size):
-        self.players = [Player(i) for i in range(size//2)]
+        self.players = [Player(i) for i in range(size // 2)]
         self.me = self.players[id]
         self.size = size
-        self.board = np.full((size, size), -1)
+        self.board = [[-1] * size for _ in range(size)]
 
     def update_head_pos(self, pos, player_id):
         self.board[pos[0]][pos[1]] = player_id
@@ -40,6 +41,72 @@ class Game:
         if konjunk: return all(bools)
         return any(bools)
 
+    def choose_dir(self):
+        """choose the next direction for the player"""
+        size = self.size
+        heads = [p.head for p in self.players if p.alive]
+        me = self.me.id
+        my_heads = [self.me.head]
+        other_heads = heads[:me] + heads[me + 1:]
+        # -1 -> occupied
+        # 0 -> free
+        # [a, b, c, ...] => a -> player_id; b, c, ... -> prev. squares
+        board = [[0] * size for _ in range(size)]
+        for i in range(size):
+            for j in range(size):
+                if self.board[i][j] != -1:
+                    board[i][j] = -1
+
+        for p in self.players:
+            if p.alive:
+                board[p.head[0]][p.head[1]] = [p.id]
+
+        board[self.me.head[0]][self.me.head[1]] = [-25]
+
+        while True:
+            print_board(board)
+            new_players = []
+            new_mes = []
+            for head in other_heads:
+                for i in range(4):
+                    moved = move(head, i)
+                    y, x = [moved[0] % size, moved[1] % size]
+                    if type(board[y][x]) == list:
+                        # if list from me: eventually go there
+                        if board[y][x][0] <= -2 and not any([y, x] == l for l in my_heads):
+                            board[y][x] = [-1, board[y][x], board[head[0]][head[1]] + [head, ]]
+                            new_players.append([y, x])
+                    elif board[y][x] == 0:
+                        # if empty: go there
+                        board[y][x] = board[head[0]][head[1]] + [head, ]
+                        new_players.append([y, x])
+            for head in my_heads:
+                for i in range(4):
+                    moved = move(head, i)
+                    y, x = [moved[0] % size, moved[1] % size]
+                    if type(board[y][x]) == list:
+                        # if list from me: override it, if you haven't been there
+                        if board[y][x][0] <= -2 and not any([y, x] == l for l in board[head[0]][head[1]]):
+                            board[y][x] = board[head[0]][head[1]] + [head, ]
+                            if [y, x] not in new_mes:
+                                new_mes.append([y, x])
+                    elif board[y][x] == 0:
+                        # if empty: go there
+                        board[y][x] = board[head[0]][head[1]] + [head, ]
+                        if board[head[0]][head[1]][0] <= -20:
+                            board[y][x][0] = - 2 - i
+                        if [y, x] not in new_mes:
+                            new_mes.append([y, x])
+            if not new_mes:
+                break
+            my_heads = new_mes
+            other_heads = new_players
+        y, x = my_heads[0]
+        print(f"Aiming for ({y}|{x}) via {board[y][x]}")
+        if board[y][x][0] <= -10:
+
+        return - 2 - board[y][x][0]
+
     def __str__(self):
         string = ''
         for row in self.board:
@@ -51,15 +118,11 @@ class Game:
             string = string[:-1] + '\n'
         return string
 
-
-
-
 class Player:
     def __init__(self, id):
         self.id = id
-        self.head_pos = [0, 0]
+        self.head = [0, 0]
         self.alive = True
-
 
 def spl(s):
     """split the incoming binary string into a 2d list"""
@@ -79,6 +142,20 @@ def move(pos, direction):
     elif direction == 3:
         return [pos[0], pos[1] - 1]
     return pos
+
+def print_board(board):
+    #print(board)
+    string = ''
+    for row in board:
+        for cell in row:
+            if type(cell) == list:
+                string += f"{cell[0]:^3}|"
+            elif cell == 0:
+                string += f"   |"
+            else:
+                string += f"{cell:^3}|"
+        string = string[:-1] + '\n'
+    print(string)
 
 def main():
     """main game loop"""
@@ -122,13 +199,12 @@ def main():
                             # print current board
                             print(game)
                             # call choose_dir() func to set a new direction and move there
-                            dir = choose_dir(game)
+                            dir = game.choose_dir()
                             print(DIRS[dir])
                             s.send(b'move|' + DIRS[dir] + b'\n')
                         case "pos":
-                            print(move)
                             # update a player's position
-                            game.update_head_pos(np.array([move[3], move[2]]), move[1])
+                            game.update_head_pos([move[3], move[2]], move[1])
                         case "player":
                             # initialize a new player, seems unnecessary currently
                             pass
@@ -149,74 +225,19 @@ def main():
         s.shutdown(1)
         s.close()
 
-def choose_dir(game):
-    """choose the next direction for the player"""
-    return 0
-
-class Test:
-    def choose_dir(self):
-        """choose the next direction for the player"""
-        size, player = 5, None
-        players = [[1, 1], [1, 4], [3, 2]]
-        me = 0
-        my_heads = [players[me]]
-        other_players = players[:me] + players[me+1:]
-        # -1 -> occupied
-        # 0 -> free
-        # [a, b, c, ...] => a -> player_id; b, c, ... -> prev. squares
-        board = [[-1,    -1,  0,  0, -1],
-                 [-1,[-25],  0,  -1,[1]],
-                 [ 0,    0,  0,  0,  -1],
-                 [ 0,    -1,[2],  0,  -1],
-                 [ 0,    0, -1, -1, -1]]
-
-        while True:
-            new_players = []
-            new_mes = []
-            for head in other_players:
-                for i in range(4):
-                    moved = move(head, i)
-                    y, x = [moved[0]%size, moved[1]%size]
-                    if type(board[y][x]) == list:
-                        # if list from me: eventually go there
-                        if board[y][x][0] <= -2 and [y, x] not in my_heads:
-                            board[y][x] = [-1, board[y][x], board[head[0]][head[1]] + [head,]]
-                            new_players.append([y, x])
-                    elif board[y][x] == 0:
-                        # if empty: go there
-                        board[y][x] = board[head[0]][head[1]] + [head,]
-                        new_players.append([y, x])
-            for head in my_heads:
-                for i in range(4):
-                    moved = move(head, i)
-                    y, x = [moved[0] % size, moved[1] % size]
-                    if type(board[y][x]) == list:
-                        # if list from me: override it, if you haven't been there
-                        if board[y][x][0] <= -2 and [y, x] not in board[head[0]][head[1]]:
-                            board[y][x] = board[head[0]][head[1]] + [head, ]
-                            if [y, x] not in new_mes:
-                                new_mes.append([y, x])
-                    elif board[y][x] == 0:
-                        # if empty: go there
-                        board[y][x] = board[head[0]][head[1]] + [head, ]
-                        if board[head[0]][head[1]][0] <= -20:
-                            board[y][x][0] = - 2 - i
-                        if [y, x] not in new_mes:
-                            new_mes.append([y, x])
-            if not new_mes:
-                break
-            my_heads = new_mes
-            other_players = new_players
-        print(my_heads)
-        print([-2-board[x][y][0] for x, y in my_heads])
-
-
-
-        #print(board)
-
-
-
-
 # start the main loop
-test = Test()
-test.choose_dir()
+main()
+def some_test_func():
+    game = Game(2, 6)
+    game.update_head_pos([0, 0], 0)
+    game.update_head_pos([2, 2], 1)
+    game.update_head_pos([4, 4], 2)
+    game.choose_dir()
+    game.update_head_pos([0, 1], 0)
+    game.update_head_pos([1, 2], 1)
+    game.update_head_pos([3, 4], 2)
+    game.choose_dir()
+    game.update_head_pos([0, 1], 0)
+    game.update_head_pos([1, 2], 1)
+    game.update_head_pos([3, 4], 2)
+
