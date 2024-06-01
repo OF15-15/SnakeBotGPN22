@@ -78,7 +78,9 @@ def main():
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.connect((HOST, PORT))
         with open("pw.txt") as f:
-            s.send(b'join|' + f.readline().encode() + b'|' + f.readline().encode() + b'\n')
+            string = f.read().split('\n')
+
+        s.send(b'join|' + string[0].encode() + b'|' + string[1].encode() + b'\n')
 
         # declare vars
         old_data = ''
