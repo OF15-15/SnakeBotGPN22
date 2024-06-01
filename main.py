@@ -10,9 +10,10 @@ PORT = 4000
 DIRS = [b"up", b"right", b"down", b"left"]
 
 class Game:
-    def __init__(self, id):
+    def __init__(self, id, size):
         self.me = Player(id)
         self.players = []
+        self.board = Board(size)
 
 
 
@@ -128,30 +129,31 @@ def main():
                             pass
                         case "game":
                             # starting a new game: reset the board, start with moving upwards
-                            game = Game(int(move[1]), int(move[3]))
+                            game = Game(move[3], move[2])
                             # width, height, id = move[1:]
                             s.send(b'chat|running the nets\n')
                             s.send(b'move|up\n')
-                            print(f"game started ({gb.size}x{gb.size}) as player {gb.id}")
+                            print(f"game started ({game.board.size}x{game.board.size}) as player {game.me.id}")
                         case "tick":
                             # one gamestep
                             # print current board
                             # print(gb)
                             # call choose_dir() func to set a new direction and move there
-                            dir = choose_dir(gb)
+                            dir = choose_dir(game)
                             print(DIRS[dir])
-                            print(gb.heads)
                             s.send(b'move|' + DIRS[dir] + b'\n')
                         case "pos":
+                            print(move)
                             # update a player's position
-                            gb.update_pos(move)
+                            game.board.update_pos(np.array([move[2], move[3]]), move[1])
                         case "player":
                             # initialize a new player, seems unnecessary currently
                             pass
                         case "die":
                             # remove a dead player from the game board
                             for pl in move[1:]:
-                                gb.remove(int(pl))
+                                game.board.remove(pl)
+
                         case _:
                             # if unknown, just print it
                             print(move)
@@ -164,11 +166,13 @@ def main():
         s.shutdown(1)
         s.close()
 
-def choose_dir(gb):
+def choose_dir(game):
+    
+
     """choose the next direction for the player"""
-    print(gb.pos, gb.id)
+    print(game.me.head_pos, game.me.id)
     for i in range(4):
-        if gb.free(gb.pos, [i]) and gb.free(move(gb.pos, i), [i - 1, i, i + 1], False):
+        if game.board.free(game.me.head_pos, [i]) and game.board.free(move(game.me.head_pos, i), [i - 1, i, i + 1], False):
             return i
     return 0
 
