@@ -138,7 +138,7 @@ def choose_dir(gb):
     """choose the next direction for the player"""
     print(gb.pos, gb.id)
     for i in range(3):
-        if gb.free(gb.pos, i):
+        if gb.free(gb.pos, [i]):
             return i
     return 0
 
