@@ -53,14 +53,14 @@ class GameBoard:
                     self.board[j][i] = -1
         print("removed player", player)
 
-    def free(self, pos, dirs, konjunk = True):
+    def free(self, pos, dirs, konjunk=True):
         """Returns if the square in the specified directions are empty"""
-        dirs = [d%4 for d in dirs]
+        dirs = [d % 4 for d in dirs]
         bools = []
         if 0 in dirs: bools.append(self.board[(pos[0] - 1) % self.size][pos[1] % self.size] == -1)
         if 1 in dirs: bools.append(self.board[pos[0] % self.size][(pos[1] + 1) % self.size] == -1)
         if 2 in dirs: bools.append(self.board[(pos[0] + 1) % self.size][pos[1] % self.size] == -1)
-        if 3 in dirs: bools.append(self.board[pos[0] % self.size][(pos[1] -1 ) % self.size] == -1)
+        if 3 in dirs: bools.append(self.board[pos[0] % self.size][(pos[1] - 1) % self.size] == -1)
         if konjunk: return all(bools)
         return any(bools)
 
@@ -128,7 +128,7 @@ def main():
                         case "":
                             pass
                         case "game":
-                            #test
+                            # test
                             # starting a new game: reset the board, start with moving upwards
                             gb = GameBoard(int(move[1]), int(move[3]))
                             # width, height, id = move[1:]
@@ -138,7 +138,7 @@ def main():
                         case "tick":
                             # one gamestep
                             # print current board
-                            #print(gb)
+                            # print(gb)
                             # call choose_dir() func to set a new direction and move there
                             dir = choose_dir(gb)
                             print(DIRS[dir])
@@ -170,7 +170,7 @@ def choose_dir(gb):
     """choose the next direction for the player"""
     print(gb.pos, gb.id)
     for i in range(4):
-        if gb.free(gb.pos, [i]) and gb.free(move(gb.pos, i), [i-1, i, i+1], False):
+        if gb.free(gb.pos, [i]) and gb.free(move(gb.pos, i), [i - 1, i, i + 1], False):
             return i
     return 0
 
