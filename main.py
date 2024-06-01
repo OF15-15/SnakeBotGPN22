@@ -11,31 +11,14 @@ DIRS = [b"up", b"right", b"down", b"left"]
 
 class Game:
     def __init__(self, id, size):
-        self.me = Player(id)
-        self.players = []
-        self.board = Board(size)
-
-
-
-class Player:
-    def __init__(self, id):
-        self.id = id
-        self.head_pos = [0, 0]
-
-
-
-class Board:
-    """describes the current game state"""
-
-    def __init__(self, size):
+        self.players = [Player(i) for i in range(size//2)]
+        self.me = self.players[id]
         self.size = size
-        # saves all the data in a 2 dim array, -1 is empty
-        # np to make it faster?
         self.board = np.full((size, size), -1)
 
-    def update_pos(self, pos, player_id):
-        """Update the Game when a player does a given move"""
+    def update_head_pos(self, pos, player_id):
         self.board[pos[0]][pos[1]] = player_id
+        self.players[player_id].head = pos
 
     def remove(self, player_id):
         """Removes a player that died"""
@@ -43,18 +26,8 @@ class Board:
             for i in range(self.size):
                 if self.board[j][i] == player_id:
                     self.board[j][i] = -1
+        self.players[player_id].alive = False
         print("removed player", player_id)
-
-    def distance(self):
-        """Gets playrers with distance 2"""
-        players = []
-        for j in range(len(self.heads)):
-            if j != self.id:
-                if abs(self.heads[j][0] - self.pos[0]) + abs(self.heads[j][1] - self.pos[1]) == 2:
-                    players.append(j)
-
-        self.playersCareful = players
-
 
     def free(self, pos, dirs, konjunk=True):
         """Returns if the square in the specified directions are empty"""
@@ -77,6 +50,16 @@ class Board:
                     string += f"{cell:^3}|"
             string = string[:-1] + '\n'
         return string
+
+
+
+
+class Player:
+    def __init__(self, id):
+        self.id = id
+        self.head_pos = [0, 0]
+        self.alive = True
+
 
 def spl(s):
     """split the incoming binary string into a 2d list"""
@@ -133,11 +116,11 @@ def main():
                             # width, height, id = move[1:]
                             s.send(b'chat|running the nets\n')
                             s.send(b'move|up\n')
-                            print(f"game started ({game.board.size}x{game.board.size}) as player {game.me.id}")
+                            print(f"game started ({game.size}x{game.size}) as player {game.me.id}")
                         case "tick":
                             # one gamestep
                             # print current board
-                            # print(gb)
+                            print(game)
                             # call choose_dir() func to set a new direction and move there
                             dir = choose_dir(game)
                             print(DIRS[dir])
@@ -145,14 +128,14 @@ def main():
                         case "pos":
                             print(move)
                             # update a player's position
-                            game.board.update_pos(np.array([move[2], move[3]]), move[1])
+                            game.update_head_pos(np.array([move[3], move[2]]), move[1])
                         case "player":
                             # initialize a new player, seems unnecessary currently
                             pass
                         case "die":
                             # remove a dead player from the game board
                             for pl in move[1:]:
-                                game.board.remove(pl)
+                                game.remove(pl)
 
                         case _:
                             # if unknown, just print it
@@ -167,13 +150,7 @@ def main():
         s.close()
 
 def choose_dir(game):
-    
-
     """choose the next direction for the player"""
-    print(game.me.head_pos, game.me.id)
-    for i in range(4):
-        if game.board.free(game.me.head_pos, [i]) and game.board.free(move(game.me.head_pos, i), [i - 1, i, i + 1], False):
-            return i
     return 0
 
 # start the main loop
