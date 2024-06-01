@@ -28,10 +28,10 @@ class GameBoard:
 
     def remove(self, player):
         """Removes a player that died"""
-        for row in self.board:
-            for i in range(len(row)):
-                if row[i] == player:
-                    row[i] = -1
+        for j in range(self.size):
+            for i in range(self.size):
+                if self.board[i] == player:
+                    self.board[i] = -1
 
     def __str__(self):
         string = ''
@@ -122,7 +122,7 @@ def main():
 def choose_dir(gb):
     """choose the next direction for the player"""
     pos = gb.pos
-    print(pos)
+    print(pos, gb.id)
     if gb.board[(pos[0]-1)%gb.size][pos[1]] == -1:
         return 0
     elif gb.board[pos[0]][(pos[1]+1)%gb.size] == -1:
