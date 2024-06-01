@@ -30,8 +30,8 @@ class GameBoard:
         """Removes a player that died"""
         for j in range(self.size):
             for i in range(self.size):
-                if self.board[i] == player:
-                    self.board[i] = -1
+                if self.board[j][i] == player:
+                    self.board[j][i] = -1
 
     def __str__(self):
         string = ''
@@ -60,7 +60,8 @@ def main():
         # socket setup & join command
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.connect((HOST, PORT))
-        s.send(b'join|OF15-15|love<3\n')
+        with open("pw.txt") as f:
+            s.send(b'join|OF15-15|' + f.read().encode() + b'\n')
 
         # declare vars
         old_data = ''
