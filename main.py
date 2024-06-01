@@ -98,6 +98,7 @@ def main():
                         case "":
                             pass
                         case "game":
+                            #test
                             # starting a new game: reset the board, start with moving upwards
                             gb = GameBoard(int(move[1]), int(move[3]))
                             # width, height, id = move[1:]
