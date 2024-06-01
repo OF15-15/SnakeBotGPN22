@@ -1,4 +1,3 @@
-# echo-client.py
 import random
 import socket
 import time
@@ -10,30 +9,40 @@ PORT = 4000
 # the four possible directions
 DIRS = [b"up", b"right", b"down", b"left"]
 
-class GameBoard:
+class Game:
+    def __init__(self, id):
+        self.me = Player(id)
+        self.players = []
+
+
+
+class Player:
+    def __init__(self, id):
+        self.id = id
+        self.head_pos = [0, 0]
+
+
+
+class Board:
     """describes the current game state"""
 
-    def __init__(self, size, id):
+    def __init__(self, size):
         self.size = size
         # saves all the data in a 2 dim array, -1 is empty
-        # np to make it faster
+        # np to make it faster?
         self.board = np.full((size, size), -1)
-        self.id = id
-        self.pos = [0, 0]
-        print(size)
-        self.heads = np.full((((size)) // 2, 2), -1)
-        self.playersCareful = []
 
-    def update_pos(self, move):
+    def update_pos(self, pos, player_id):
         """Update the Game when a player does a given move"""
-        self.board[int(move[3])][int(move[2])] = int(move[1])
-        # update your position if it's your move
-        if int(move[1]) == self.id:
-            self.pos = [int(move[3]), int(move[2])]
+        self.board[pos[0]][pos[1]] = player_id
 
-        # update the heads of the players
-        self.heads[int(move[1])][0] = int(move[2])
-        self.heads[int(move[1])][1] = int(move[3])
+    def remove(self, player_id):
+        """Removes a player that died"""
+        for j in range(self.size):
+            for i in range(self.size):
+                if self.board[j][i] == player_id:
+                    self.board[j][i] = -1
+        print("removed player", player_id)
 
     def distance(self):
         """Gets playrers with distance 2"""
@@ -45,13 +54,6 @@ class GameBoard:
 
         self.playersCareful = players
 
-    def remove(self, player):
-        """Removes a player that died"""
-        for j in range(self.size):
-            for i in range(self.size):
-                if self.board[j][i] == player:
-                    self.board[j][i] = -1
-        print("removed player", player)
 
     def free(self, pos, dirs, konjunk=True):
         """Returns if the square in the specified directions are empty"""
@@ -79,7 +81,7 @@ def spl(s):
     """split the incoming binary string into a 2d list"""
     string = s.decode()
     commands = string.split("\n")
-    data = [c.split('|') for c in commands]
+    data = [[int(elem) if elem.isdigit() else elem for elem in c.split('|')] for c in commands]
     return data
 
 def move(pos, direction):
@@ -108,8 +110,7 @@ def main():
 
         # declare vars
         old_data = ''
-        gb = None
-        players = []
+        game = None
 
         # loop
         while True:
@@ -119,18 +120,15 @@ def main():
             if raw_data != old_data:
                 old_data = raw_data
                 spl_data = spl(raw_data)
-                # direct user input
-                # i = input()
-                # s.send(b'move|' + direc[i] + b'\n')
+
                 for move in spl_data:
                     # iterate over all moves and perform a case matching the command
                     match move[0]:
                         case "":
                             pass
                         case "game":
-                            # test
                             # starting a new game: reset the board, start with moving upwards
-                            gb = GameBoard(int(move[1]), int(move[3]))
+                            game = Game(int(move[1]), int(move[3]))
                             # width, height, id = move[1:]
                             s.send(b'chat|running the nets\n')
                             s.send(b'move|up\n')
