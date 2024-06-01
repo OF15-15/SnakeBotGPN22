@@ -20,6 +20,9 @@ class GameBoard:
         self.board = np.full((size, size), -1)
         self.id = id
         self.pos = [0, 0]
+        print(size)
+        self.heads = np.full((((size)) // 2, 2), -1)
+        self.playersCareful = []
 
     def update_pos(self, move):
         """Update the Game when a player does a given move"""
@@ -27,6 +30,20 @@ class GameBoard:
         # update your position if it's your move
         if int(move[1]) == self.id:
             self.pos = [int(move[3]), int(move[2])]
+
+        # update the heads of the players
+        self.heads[int(move[1])][0] = int(move[2])
+        self.heads[int(move[1])][1] = int(move[3])
+
+    def distance(self):
+        """Gets playrers with distance 2"""
+        players = []
+        for j in range(len(self.heads)):
+            if j != self.id:
+                if abs(self.heads[j][0] - self.pos[0]) + abs(self.heads[j][1] - self.pos[1]) == 2:
+                    players.append(j)
+
+        self.playersCareful = players
 
     def remove(self, player):
         """Removes a player that died"""
@@ -121,10 +138,11 @@ def main():
                         case "tick":
                             # one gamestep
                             # print current board
-                            print(gb)
+                            #print(gb)
                             # call choose_dir() func to set a new direction and move there
                             dir = choose_dir(gb)
                             print(DIRS[dir])
+                            print(gb.heads)
                             s.send(b'move|' + DIRS[dir] + b'\n')
                         case "pos":
                             # update a player's position
